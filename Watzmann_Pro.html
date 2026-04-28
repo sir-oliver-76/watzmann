@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<title>Watzmann Umrundung PRO</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body { margin:0; font-family: Arial; }
+#map { height: 70vh; }
+#controls { padding:10px; background:#f5f5f5; }
+button { margin:5px; padding:8px; cursor:pointer; }
+#chart-container { height: 30vh; padding:10px; }
+.popup-title { font-weight:bold; font-size:15px; }
+</style>
+</head>
+
+<body>
+
+<div id="controls">
+  <button onclick="toggleLayer('stages')">Etappen anzeigen/ausblenden</button>
+  <button onclick="toggleLayer('huts')">Hütten anzeigen/ausblenden</button>
+  <button onclick="toggleLayer('hazards')">Gefahren anzeigen/ausblenden</button>
+  <button onclick="locateUser()">📍 Mein Standort</button>
+</div>
+
+<div id="map"></div>
+<div id="chart-container">
+  <canvas id="elevationChart"></canvas>
+</div>
+
+<script>
+
+// Karte
+var map = L.map('map').setView([47.55, 12.92], 12);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap'
+}).addTo(map);
+
+// Layer-Gruppen
+var layers = {
+  stages: L.layerGroup().addTo(map),
+  huts: L.layerGroup().addTo(map),
+  hazards: L.layerGroup().addTo(map)
+};
+
+// Toggle Funktion
+function toggleLayer(name){
+  if(map.hasLayer(layers[name])){
+    map.removeLayer(layers[name]);
+  } else {
+    map.addLayer(layers[name]);
+  }
+}
+
+// =====================
+// ETAPPEN
+// =====================
+var stages = [
+  {
+    name:"Etappe 1",
+    coords:[47.57,12.92],
+    text:"Wimbachbrücke → Watzmannhaus<br>⛰️ +1300hm<br>⏱️ 5–6h<br>🥾 11km"
+  },
+  {
+    name:"Etappe 2",
+    coords:[47.55,12.94],
+    text:"Watzmannhaus → Kärlingerhaus<br>⛰️ +1200hm<br>⏱️ 6–7h<br>🥾 18km"
+  },
+  {
+    name:"Etappe 3",
+    coords:[47.52,12.96],
+    text:"Kärlingerhaus → Königssee<br>⛰️ +1000hm<br>⏱️ 5–6h<br>🥾 15km"
+  }
+];
+
+stages.forEach(s=>{
+  L.marker(s.coords).addTo(layers.stages)
+  .bindPopup("<div class='popup-title'>"+s.name+"</div>"+s.text);
+});
+
+// =====================
+// HÜTTEN
+// =====================
+var huts = [
+  {
+    name:"Watzmannhaus",
+    coords:[47.56,12.91],
+    text:"🏠 DAV Hütte<br>🍽️ Warmes Essen<br>🛏️ Übernachtung"
+  },
+  {
+    name:"Kärlingerhaus",
+    coords:[47.52,12.96],
+    text:"🏠 Große Hütte<br>🌊 Funtensee Nähe<br>🍺 Top Einkehr"
+  },
+  {
+    name:"Wimbachgrieshütte",
+    coords:[47.55,12.89],
+    text:"🍺 Perfekte Pause<br>🥨 Snacks"
+  }
+];
+
+huts.forEach(h=>{
+  L.marker(h.coords,{
+    icon: L.icon({
+      iconUrl:"https://cdn-icons-png.flaticon.com/512/235/235861.png",
+      iconSize:[25,25]
+    })
+  }).addTo(layers.huts)
+  .bindPopup("<div class='popup-title'>"+h.name+"</div>"+h.text);
+});
+
+// =====================
+// GEFAHREN / HIGHLIGHTS
+// =====================
+var hazards = [
+  {
+    name:"Steinschlagzone",
+    coords:[47.54,12.93],
+    text:"⚠️ Steinschlag möglich – Helm sinnvoll"
+  },
+  {
+    name:"Lange ausgesetzte Passage",
+    coords:[47.53,12.95],
+    text:"⚠️ Trittsicherheit erforderlich"
+  }
+];
+
+hazards.forEach(h=>{
+  L.circleMarker(h.coords,{
+    radius:8
+  }).addTo(layers.hazards)
+  .bindPopup("<div class='popup-title'>"+h.name+"</div>"+h.text);
+});
+
+// =====================
+// ROUTE
+// =====================
+var route = [
+  [47.57,12.92],
+  [47.56,12.91],
+  [47.55,12.94],
+  [47.52,12.96],
+  [47.51,12.93]
+];
+
+L.polyline(route,{color:"red",weight:4}).addTo(map);
+
+// =====================
+// GPS
+// =====================
+function locateUser(){
+  map.locate({setView:true, maxZoom:14});
+}
+
+map.on('locationfound', function(e){
+  L.marker(e.latlng).addTo(map)
+    .bindPopup("Du bist hier").openPopup();
+});
+
+// =====================
+// HÖHENPROFIL
+// =====================
+var ctx = document.getElementById('elevationChart').getContext('2d');
+
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: ["Start","Etappe1","Etappe2","Etappe3","Ziel"],
+    datasets: [{
+      label: "Höhe (m)",
+      data: [650, 1900, 2100, 1600, 600],
+      fill: false
+    }]
+  },
+  options: {
+    responsive: true
+  }
+});
+
+</script>
+
+</body
